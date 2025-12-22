@@ -103,6 +103,10 @@
             .catch((err) => {
               statusEl.textContent = "❌ Activation error: " + err.message;
             });
+        },
+        onError: function(err) {
+          console.error("PayPal Basic onError:", err);
+          statusEl.textContent = "PayPal error: " + (err && err.message ? err.message : JSON.stringify(err));
         }
       }).render("#paypal-basic");
 
@@ -141,6 +145,10 @@
             .catch((err) => {
               statusEl.textContent = "❌ Activation error: " + err.message;
             });
+        },
+        onError: function(err) {
+          console.error("PayPal Pro onError:", err);
+          statusEl.textContent = "PayPal error: " + (err && err.message ? err.message : JSON.stringify(err));
         }
       }).render("#paypal-pro");
 
@@ -185,6 +193,10 @@
             .catch((err) => {
               statusEl.textContent = "❌ Activation error: " + err.message;
             });
+        },
+        onError: function(err) {
+          console.error("PayPal Pack onError:", err);
+          statusEl.textContent = "PayPal error: " + (err && err.message ? err.message : JSON.stringify(err));
         }
       }).render("#paypal-pack");
 
