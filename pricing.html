@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Executive Summary - Pricing</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      body { font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI"; margin: 0; padding: 24px; background: #f9fafb; }
+      h1 { margin-bottom: 8px; }
+      .plan { background: #fff; border-radius: 12px; padding: 16px; margin-bottom: 16px; box-shadow: 0 4px 10px rgba(15,23,42,0.06); }
+      .plan-title { font-weight: 700; margin-bottom: 4px; }
+      .price { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+      .desc { color: #475569; font-size: 13px; margin-bottom: 8px; }
+      .email-box { margin: 12px 0; }
+      .email-box input { width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #cbd5e1; font-size: 13px; }
+      #status { margin-top: 12px; font-size: 13px; color: #0369a1; }
+    </style>
+    <!-- PayPal Sandbox Client ID (for safe testing) - replaced with your sandbox client-id -->
+    <script src="https://www.paypal.com/sdk/js?client-id=AfXcucijzGfbz-QVwKFLakQ2kHYQGxPN6ZEcDLZcldcm9vzBaX_0p_wqQFxwLCaTQgsUlLOLWya3IHUC&vault=true&intent=subscription&components=buttons" data-sdk-integration-source="button-factory"></script>
+  </head>
+  <body>
+    <h1>Executive Summary – Pricing</h1>
+    <p>Use your work email (same as in the Chrome extension) so we can match your account.</p>
+
+    <div class="email-box">
+      <input id="user-email" type="email" placeholder="Work email, e.g. you@company.com" />
+    </div>
+
+    <div class="plan">
+      <div class="plan-title">Basic</div>
+      <div class="price">$14.99 / month</div>
+      <div class="desc">Up to 30 summaries per day. Ideal for individual knowledge workers.</div>
+      <div id="paypal-basic"></div>
+    </div>
+
+    <div class="plan">
+      <div class="plan-title">Pro</div>
+      <div class="price">$29.99 / month</div>
+      <div class="desc">Up to 100 summaries per day. For power users and heavy readers.</div>
+      <div id="paypal-pro"></div>
+    </div>
+
+    <div class="plan">
+      <div class="plan-title">Calls Pack</div>
+      <div class="price">$5 / 500 calls</div>
+      <div class="desc">Best for occasional users. No expiry date.</div>
+      <div id="paypal-pack"></div>
+    </div>
+
+    <div id="status"></div>
+
+    <script>
+      const BACKEND_BASE = "https://exec-summary.exec-summary-api.workers.dev";
+
+      const urlParams = new URLSearchParams(location.search);
+      const presetPlan = urlParams.get("plan"); // basic / pro / pack
+      const presetUser = urlParams.get("user") || "";
+      const emailInput = document.getElementById("user-email");
+      const statusEl = document.getElementById("status");
+      if (presetUser) emailInput.value = presetUser;
+
+      function getUserEmail() {
+        const v = (emailInput.value || "").trim();
+        if (!v) {
+          statusEl.textContent = "Please enter your work email (same as in the extension).";
+          return null;
+        }
+        return v;
+      }
+
+      // Basic 订阅 - 已配置你的 Plan ID
+      paypal.Buttons({
+        onClick: () => {
+          const email = getUserEmail();
+          if (!email) return false;
+          return true;
+        },
+        createSubscription: function (data, actions) {
+          return actions.subscription.create({
+            plan_id: "P-10504688XK248972UNFGMSZQ"  // Basic Plan ID (your sandbox)
+          });
+        },
+        onApprove: function (data, actions) {
+          const email = getUserEmail();
+          statusEl.textContent = "Activating your Basic subscription...";
+          fetch(BACKEND_BASE + "/api/activate-subscription", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              userId: email,
+              plan: "basic",
+              paypalSubscriptionId: data.subscriptionID
+            })
+          })
+            .then((r) => r.json())
+            .then((res) => {
+              if (res.success) {
+                statusEl.textContent = "✅ Basic plan activated! You can now use the extension with 30 summaries per day.";
+              } else {
+                statusEl.textContent = "❌ Activation failed: " + (res.error || "Unknown error");
+              }
+            })
+            .catch((err) => {
+              statusEl.textContent = "❌ Activation error: " + err.message;
+            });
+        },
+        onError: function(err) {
+          console.error("PayPal Basic onError:", err);
+          statusEl.textContent = "PayPal error: " + (err && err.message ? err.message : JSON.stringify(err));
+        }
+      }).render("#paypal-basic");
+
+      // Pro 订阅 - 已配置你的 Plan ID
+      paypal.Buttons({
+        onClick: () => {
+          const email = getUserEmail();
+          if (!email) return false;
+          return true;
+        },
+        createSubscription: function (data, actions) {
+          return actions.subscription.create({
+            plan_id: "P-1B482814GM6472021NFGMWDA"  // Pro Plan ID (your sandbox)
+          });
+        },
+        onApprove: function (data, actions) {
+          const email = getUserEmail();
+          statusEl.textContent = "Activating your Pro subscription...";
+          fetch(BACKEND_BASE + "/api/activate-subscription", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              userId: email,
+              plan: "pro",
+              paypalSubscriptionId: data.subscriptionID
+            })
+          })
+            .then((r) => r.json())
+            .then((res) => {
+              if (res.success) {
+                statusEl.textContent = "✅ Pro plan activated! You can now use the extension with 100 summaries per day.";
+              } else {
+                statusEl.textContent = "❌ Activation failed: " + (res.error || "Unknown error");
+              }
+            })
+            .catch((err) => {
+              statusEl.textContent = "❌ Activation error: " + err.message;
+            });
+        },
+        onError: function(err) {
+          console.error("PayPal Pro onError:", err);
+          statusEl.textContent = "PayPal error: " + (err && err.message ? err.message : JSON.stringify(err));
+        }
+      }).render("#paypal-pro");
+
+      // Calls Pack 一次性购买
+      paypal.Buttons({
+        onClick: () => {
+          const email = getUserEmail();
+          if (!email) return false;
+          return true;
+        },
+        createOrder: function (data, actions) {
+          return actions.order.create({
+            purchase_units: [
+              {
+                amount: { currency_code: "USD", value: "5.00" },
+                description: "500 summary calls pack"
+              }
+            ]
+          });
+        },
+        onApprove: function (data, actions) {
+          const email = getUserEmail();
+          statusEl.textContent = "Verifying your pack purchase...";
+          fetch(BACKEND_BASE + "/api/activate-pack", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              userId: email,
+              extraCalls: 500,
+              paypalOrderId: data.orderID
+            })
+          })
+            .then((r) => r.json())
+            .then((res) => {
+              if (res.success) {
+                statusEl.textContent =
+                  "✅ Pack activated! Remaining calls: " + res.remainingCalls + ". You can now use the extension.";
+              } else {
+                statusEl.textContent = "❌ Activation failed: " + (res.error || "Unknown error");
+              }
+            })
+            .catch((err) => {
+              statusEl.textContent = "❌ Activation error: " + err.message;
+            });
+        },
+        onError: function(err) {
+          console.error("PayPal Pack onError:", err);
+          statusEl.textContent = "PayPal error: " + (err && err.message ? err.message : JSON.stringify(err));
+        }
+      }).render("#paypal-pack");
+
+      // 从插件跳过来的视觉提示
+      if (presetPlan === "basic") {
+        statusEl.textContent = "You selected Basic plan. Please complete the payment below.";
+      } else if (presetPlan === "pro") {
+        statusEl.textContent = "You selected Pro plan. Please complete the payment below.";
+      } else if (presetPlan === "pack") {
+        statusEl.textContent = "You selected Calls Pack. Please complete the payment below.";
+      }
+    </script>
+  </body>
+</html>
+
